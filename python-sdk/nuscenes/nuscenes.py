@@ -555,7 +555,7 @@ class NuScenesExplorer:
 
         # Remove points that are either outside or behind the camera. Leave a margin of 1 pixel for aesthetic reasons.
         mask = np.ones(depths.shape[0], dtype=bool)
-        mask = np.logical_and(mask, depths > 1)  # TODO: modified to filter close points
+        mask = np.logical_and(mask, depths > 2)  # TODO: modified to filter close points
         mask = np.logical_and(mask, points[0, :] > 1)
         mask = np.logical_and(mask, points[0, :] < im.size[0] - 1)
         mask = np.logical_and(mask, points[1, :] > 1)

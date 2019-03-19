@@ -18,7 +18,7 @@ scene_tokens = [s['token'] for s in nusc.scene]
 random.shuffle(scene_tokens)
 
 # Create output directory
-out_dir = os.path.expanduser('~/nuscenes-visualization/scene-videos')
+out_dir = os.path.expanduser('~/nuscenes-visualization/scene-videos-points')
 if not os.path.isdir(out_dir):
     os.makedirs(out_dir)
 
