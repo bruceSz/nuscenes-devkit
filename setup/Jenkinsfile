@@ -32,14 +32,14 @@ pipeline {
                 - mountPath: /var/run/docker.sock
                   name: docker
                 - mountPath: /data/
-                  name: nudeep_data_volume
+                  name: nudeep-ci
               imagePullSecrets:
               - name: regcredjenkins
               volumes:
               - name: docker
                 hostPath:
                   path: /var/run/docker.sock
-              - name: nudeep_data_volume
+              - name: nudeep-ci
                 persistentVolumeClaim:
                   claimName: nudeep-ci
           """
