@@ -39,9 +39,9 @@ pipeline {
               - name: docker
                 hostPath:
                   path: /var/run/docker.sock
-              - name: nudeep_data_volume:
-                hostPath:
-                  path: /home/nfs/nudeep/ci/data
+              - name: nudeep_data_volume
+                persistentVolumeClaim:
+                  claimName: nudeep-ci
           """
         }// kubernetes
       } // agent
