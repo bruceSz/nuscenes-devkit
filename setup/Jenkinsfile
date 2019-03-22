@@ -31,12 +31,17 @@ pipeline {
                 volumeMounts:
                 - mountPath: /var/run/docker.sock
                   name: docker
+                - mountPath: /data/
+                  name: nudeep_data_volume
               imagePullSecrets:
               - name: regcredjenkins
               volumes:
               - name: docker
                 hostPath:
                   path: /var/run/docker.sock
+              - name: nudeep_data_volume:
+                hostPath:
+                  path: /home/nfs/nudeep/ci/data
           """
         }// kubernetes
       } // agent
