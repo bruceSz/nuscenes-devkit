@@ -19,7 +19,7 @@ echo "Building image containing nuscenes-devkit"
 docker build -t ${image_name} -f ${dockerfile} . || { echo "Failed to build main Docker image"; exit 1; }
 
 # Run baseline unit tests.
-docker run --name=${unittest_container_name} -v /data:/data \
+docker run --name=${unittest_container_name} -v /data/sets/nuscenes-v1.0:/data/sets/nuscenes \
     -e NUSCENES=/data/sets/nuscenes ${image_name} \
     /bin/bash -c "set -eux; source activate nuenv && cd python-sdk && python -m unittest"
 

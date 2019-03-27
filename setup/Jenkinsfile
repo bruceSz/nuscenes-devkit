@@ -9,7 +9,7 @@ pipeline {
   }
 
   stages {
-    stage('Build and unit test'){
+    stage('Build'){
       agent {
         kubernetes {
           label 'nuscenes-builder'
@@ -52,16 +52,16 @@ pipeline {
           // an activated Conda environment inside of the container.
           sh """#!/bin/bash
             set -eux
-            bash setup/test_mini_split.sh $TEST_IMAGE_3_6 setup/Dockerfile_3.6
-            bash setup/test_mini_split.sh $TEST_IMAGE_3_7 setup/Dockerfile_3.7
-
+            docker build -t $TEST_IMAGE_3_6 -f setup/Dockerfile_3.6 .
             docker push $TEST_IMAGE_3_6
+
+            docker build -t $TEST_IMAGE_3_7 -f setup/Dockerfile_3.7 .
             docker push $TEST_IMAGE_3_7
           """
         } // container
       }
     }
-    stage('Test notebook 3.6'){
+    stage('Test 3.6'){
       agent {
         kubernetes {
           label 'nuscenes-builder'
@@ -97,6 +97,9 @@ pipeline {
               - name: nudeep-ci
                 persistentVolumeClaim:
                   claimName: nudeep-ci
+              env:
+              - name: NUSCENES
+                value: /data/sets/nuscenes
           """
         }// kubernetes
       } // agent
@@ -104,11 +107,12 @@ pipeline {
       steps {
         container('docker') {
           sh """#!/bin/bash
+            python -m unittest
             bash test_tutorial.sh
           """
         } // container
       }
-    } // stage('Test notebook 3.7')
+    } // stage('Test 3.7')
     stage('Test notebook 3.7'){
       agent {
         kubernetes {
@@ -145,6 +149,9 @@ pipeline {
               - name: nudeep-ci
                 persistentVolumeClaim:
                   claimName: nudeep-ci
+              env:
+              - name: NUSCENES
+                value: /data/sets/nuscenes
           """
         }// kubernetes
       } // agent
@@ -152,6 +159,7 @@ pipeline {
       steps {
         container('docker') {
           sh """#!/bin/bash
+            python -m unittest
             bash test_tutorial.sh
           """
         } // container
