@@ -1,14 +1,14 @@
 # nuScenes dev-kit.
-# Code written by Qiang Xu, Oscar Beijbom, 2018.
+# Code written by Qiang Xu and Oscar Beijbom, 2018.
 # Licensed under the Creative Commons [see licence.txt]
 
 import os.path as osp
 from typing import Tuple, Any
 
-from cachetools import cached, LRUCache
-import numpy as np
 import cv2
+import numpy as np
 from PIL import Image
+from cachetools import cached, LRUCache
 
 # Set the maximum loadable image size.
 Image.MAX_IMAGE_PIXELS = 400000 * 400000
@@ -110,8 +110,6 @@ class MapMask:
         size_y = int(img.size[1] / self.resolution * native_resolution)
         img = img.resize((size_x, size_y), resample=Image.NEAREST)
 
-        # Convert to numpy and binarize.
+        # Convert to numpy.
         raw_mask = np.array(img)
-        raw_mask[raw_mask < 225] = self.background
-        raw_mask[raw_mask >= 225] = self.foreground
         return raw_mask

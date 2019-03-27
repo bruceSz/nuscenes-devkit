@@ -2,41 +2,42 @@
 # Code written by Holger Caesar, Varun Bankiti, and Alex Lang, 2019.
 # Licensed under the Creative Commons [see licence.txt]
 
-from typing import Dict
+import json
 
 import numpy as np
-import json
 from matplotlib import pyplot as plt
 
-from nuscenes.eval.detection.utils import boxes_to_sensor
 from nuscenes import NuScenes
-from nuscenes.utils.data_classes import LidarPointCloud
-from nuscenes.utils.geometry_utils import view_points
 from nuscenes.eval.detection.constants import TP_METRICS, DETECTION_NAMES, DETECTION_COLORS, TP_METRICS_UNITS, \
     PRETTY_DETECTION_NAMES, PRETTY_TP_METRICS
+from nuscenes.eval.detection.data_classes import EvalBoxes
 from nuscenes.eval.detection.data_classes import MetricDataList, DetectionMetrics
+from nuscenes.eval.detection.utils import boxes_to_sensor
+from nuscenes.utils.data_classes import LidarPointCloud
+from nuscenes.utils.geometry_utils import view_points
 
 
 def visualize_sample(nusc: NuScenes,
                      sample_token: str,
-                     all_annotations: Dict,
-                     all_results: Dict,
+                     gt_boxes: EvalBoxes,
+                     pred_boxes: EvalBoxes,
                      nsweeps: int = 1,
                      conf_th: float = 0.15,
-                     eval_range: float = 40,
-                     verbose=True) -> None:
+                     eval_range: float = 50,
+                     verbose: bool = True,
+                     savepath: str = None) -> None:
     """
     Visualizes a sample from BEV with annotations and detection results.
     :param nusc: NuScenes object.
     :param sample_token: The nuScenes sample token.
-    :param all_annotations: Maps each sample token to its annotations.
-    :param all_results: Maps each sample token to its results.
+    :param gt_boxes: Ground truth boxes grouped by sample.
+    :param pred_boxes: Prediction grouped by sample.
     :param nsweeps: Number of sweeps used for lidar visualization.
     :param conf_th: The confidence threshold used to filter negatives.
     :param eval_range: Range in meters beyond which boxes are ignored.
     :param verbose: Whether to print to stdout.
+    :param savepath: If given, saves the the rendering here instead of displaying.
     """
-
     # Retrieve sensor & pose records.
     sample_rec = nusc.get('sample', sample_token)
     sd_record = nusc.get('sample_data', sample_rec['data']['LIDAR_TOP'])
@@ -44,8 +45,8 @@ def visualize_sample(nusc: NuScenes,
     pose_record = nusc.get('ego_pose', sd_record['ego_pose_token'])
 
     # Get boxes.
-    boxes_gt_global = all_annotations[sample_token]
-    boxes_est_global = all_results[sample_token]
+    boxes_gt_global = gt_boxes[sample_token]
+    boxes_est_global = pred_boxes[sample_token]
 
     # Map GT boxes to lidar.
     boxes_gt = boxes_to_sensor(boxes_gt_global, pose_record, cs_record)
@@ -83,11 +84,15 @@ def visualize_sample(nusc: NuScenes,
     ax.set_xlim(-axes_limit, axes_limit)
     ax.set_ylim(-axes_limit, axes_limit)
 
-    # Show plot.
+    # Show / save plot.
     if verbose:
-        print('Showing sample token %s' % sample_token)
+        print('Rendered sample token %s' % sample_token)
     plt.title(sample_token)
-    plt.show()
+    if savepath is not None:
+        plt.savefig(savepath)
+        plt.close()
+    else:
+        plt.show()
 
 
 def setup_axis(xlabel: str = None,
@@ -207,7 +212,7 @@ def dist_pr_curve(md_list: MetricDataList,
     fig, (ax, lax) = plt.subplots(ncols=2, gridspec_kw={"width_ratios": [4, 1]},
                                   figsize=(7.5, 5))
 
-    ax = setup_axis(title='Recall vs Precision ({} m)'.format(dist_th), xlabel='Recall', ylabel='Precision',
+    ax = setup_axis(xlabel='Recall', ylabel='Precision',
                     xlim=1, ylim=1, min_precision=min_precision, min_recall=min_recall, ax=ax)
 
     # Plot the recall vs. precision curve for each detection class.
