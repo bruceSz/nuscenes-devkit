@@ -4,10 +4,12 @@ pipeline {
 
   environment {
     PROD_IMAGE = "nuscenes:production"
+    TEST_IMAGE_3_6 = "registry-local.nutonomy.team:5000/nuscenes-test:kube${UUID.nameUUIDFromBytes(new String(env.BUILD_TAG).getBytes())}"
+    TEST_IMAGE_3_7 = "registry-local.nutonomy.team:5000/nuscenes-test:kube${UUID.nameUUIDFromBytes(new String(env.BUILD_TAG).getBytes())}"
   }
 
   stages {
-    stage('Build and test'){
+    stage('Build and unit test'){
       agent {
         kubernetes {
           label 'nuscenes-builder'
@@ -31,8 +33,6 @@ pipeline {
                 volumeMounts:
                 - mountPath: /var/run/docker.sock
                   name: docker
-                - mountPath: /data/
-                  name: nudeep-ci
               imagePullSecrets:
               - name: regcredjenkins
               volumes:
@@ -51,11 +51,124 @@ pipeline {
           // Build the Docker image, and then run python -m unittest inside 
           // an activated Conda environment inside of the container.
           sh """#!/bin/bash
-          bash setup/test_multiple_docker_imgs.sh
+            bash setup/test_mini_split.sh $TEST_IMAGE_3_6 setup/Dockerfile_3.6
+            exit_code_3_6="$?"
+
+            bash setup/test_mini_split.sh $TEST_IMAGE_3_7 setup/Dockerfile_3.7
+            exit_code_3_7="$?"
+
+            if [ ${exit_code_3_6} -ne 0 ]; then
+                echo "Failed with Python 3.6 environment"
+                exit 1
+            elif [ ${exit_code_3_7} -ne 0 ]; then
+                echo "Failed with Python 3.7 environment"
+                exit 1
+            else
+                echo "Passed all unit tests across Docker images."
+            fi
+
+            docker push $TEST_IMAGE_3_6
+            docker push $TEST_IMAGE_3_7
           """
         } // container
       }
-    } // stage('Build and test')
+    }
+    stage('Test notebook 3.6'){
+      agent {
+        kubernetes {
+          label 'nuscenes-builder'
+          defaultContainer 'jnlp'
+          yaml """
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              labels:
+                app: nuscenes
+            spec:
+              containers:
+              - name: jnlp
+                image: registry.nutonomy.com:5000/nu/jnlp-slave:3.19-1-lfs
+                imagePullPolicy: Always
+              - name: docker
+                image: $TEST_IMAGE_3_6
+                command:
+                - cat
+                tty: true
+                volumeMounts:
+                - mountPath: /var/run/docker.sock
+                  name: docker
+                - mountPath: /data/
+                  name: nudeep-ci
+                  subPath: data
+              imagePullSecrets:
+              - name: regcredjenkins
+              volumes:
+              - name: docker
+                hostPath:
+                  path: /var/run/docker.sock
+              - name: nudeep-ci
+                persistentVolumeClaim:
+                  claimName: nudeep-ci
+          """
+        }// kubernetes
+      } // agent
+
+      steps {
+        container('docker') {
+          sh """#!/bin/bash
+            bash test_tutorial.sh
+          """
+        } // container
+      }
+    } // stage('Test notebook 3.7')
+    stage('Test notebook 3.7'){
+      agent {
+        kubernetes {
+          label 'nuscenes-builder'
+          defaultContainer 'jnlp'
+          yaml """
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              labels:
+                app: nuscenes
+            spec:
+              containers:
+              - name: jnlp
+                image: registry.nutonomy.com:5000/nu/jnlp-slave:3.19-1-lfs
+                imagePullPolicy: Always
+              - name: docker
+                image: $TEST_IMAGE_3_7
+                command:
+                - cat
+                tty: true
+                volumeMounts:
+                - mountPath: /var/run/docker.sock
+                  name: docker
+                - mountPath: /data/
+                  name: nudeep-ci
+                  subPath: data
+              imagePullSecrets:
+              - name: regcredjenkins
+              volumes:
+              - name: docker
+                hostPath:
+                  path: /var/run/docker.sock
+              - name: nudeep-ci
+                persistentVolumeClaim:
+                  claimName: nudeep-ci
+          """
+        }// kubernetes
+      } // agent
+
+      steps {
+        container('docker') {
+          sh """#!/bin/bash
+            bash test_tutorial.sh
+          """
+        } // container
+      }
+    } // stage('Test notebook 3.7')
     stage('Deploy') {
       agent {
         kubernetes {

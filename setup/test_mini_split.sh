@@ -1,10 +1,11 @@
 #!/bin/bash
-dockerfile=$1
 set -eux
+
+image_name=$1
+dockerfile=$2
 
 unittest_container_name=test_container
 tutorial_container_name=tutorial_container
-image_name=test_mini_split
 
 function clean_up(){
     echo "Cleaning up docker containers and volumes if they already exist"
@@ -23,9 +24,4 @@ docker build -t ${image_name} -f ${dockerfile} . || { echo "Failed to build main
 docker run --name=${unittest_container_name} -v /data:/data \
     -e NUSCENES=/data/sets/nuscenes ${image_name} \
     /bin/bash -c "set -eux; source activate nuenv && cd python-sdk && python -m unittest"
-
-# Test Jupyter notebook code
-docker run --name=${tutorial_container_name} -v /data:/data \
-    ${image_name} /bin/bash -c "setup/test_tutorial.sh"
-
 clean_up
