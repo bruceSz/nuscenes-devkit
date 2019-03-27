@@ -5,12 +5,10 @@ image_name=$1
 dockerfile=$2
 
 unittest_container_name=test_container
-tutorial_container_name=tutorial_container
 
 function clean_up(){
     echo "Cleaning up docker containers and volumes if they already exist"
     docker rm -f ${unittest_container_name} || { echo "test container does not exist"; }
-    docker rm -f ${tutorial_container_name} || { echo "tutorial container does not exist"; }
 }
 
 trap clean_up EXIT
@@ -24,4 +22,5 @@ docker build -t ${image_name} -f ${dockerfile} . || { echo "Failed to build main
 docker run --name=${unittest_container_name} -v /data:/data \
     -e NUSCENES=/data/sets/nuscenes ${image_name} \
     /bin/bash -c "set -eux; source activate nuenv && cd python-sdk && python -m unittest"
+
 clean_up
