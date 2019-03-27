@@ -108,7 +108,7 @@ pipeline {
         container('docker') {
           sh """#!/bin/bash
             python -m unittest
-            bash test_tutorial.sh
+            bash setup/test_tutorial.sh
           """
         } // container
       }
@@ -160,7 +160,7 @@ pipeline {
         container('docker') {
           sh """#!/bin/bash
             python -m unittest
-            bash test_tutorial.sh
+            bash setup/test_tutorial.sh
           """
         } // container
       }
