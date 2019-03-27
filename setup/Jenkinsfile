@@ -51,21 +51,22 @@ pipeline {
           // Build the Docker image, and then run python -m unittest inside 
           // an activated Conda environment inside of the container.
           sh """#!/bin/bash
+            set -eux
             bash setup/test_mini_split.sh $TEST_IMAGE_3_6 setup/Dockerfile_3.6
-            exit_code_3_6="$?"
+            #exit_code_3_6="$?"
 
             bash setup/test_mini_split.sh $TEST_IMAGE_3_7 setup/Dockerfile_3.7
-            exit_code_3_7="$?"
+            #exit_code_3_7="$?"
 
-            if [ ${exit_code_3_6} -ne 0 ]; then
-                echo "Failed with Python 3.6 environment"
-                exit 1
-            elif [ ${exit_code_3_7} -ne 0 ]; then
-                echo "Failed with Python 3.7 environment"
-                exit 1
-            else
-                echo "Passed all unit tests across Docker images."
-            fi
+            #if [ ${exit_code_3_6} -ne 0 ]; then
+            #    echo "Failed with Python 3.6 environment"
+            #    exit 1
+            #elif [ ${exit_code_3_7} -ne 0 ]; then
+            #    echo "Failed with Python 3.7 environment"
+            #    exit 1
+            #else
+            #    echo "Passed all unit tests across Docker images."
+            #fi
 
             docker push $TEST_IMAGE_3_6
             docker push $TEST_IMAGE_3_7
