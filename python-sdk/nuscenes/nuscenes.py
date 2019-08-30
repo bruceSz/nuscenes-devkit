@@ -383,9 +383,9 @@ class NuScenes:
         self.explorer.render_pointcloud_in_image(sample_token, dot_size, pointsensor_channel=pointsensor_channel,
                                                  camera_channel=camera_channel)
 
-    def render_sample(self, sample_token: str, box_vis_level: BoxVisibility = BoxVisibility.ANY, nsweeps: int = 1)\
-            -> None:
-        self.explorer.render_sample(sample_token, box_vis_level, nsweeps=nsweeps)
+    def render_sample(self, sample_token: str, box_vis_level: BoxVisibility = BoxVisibility.ANY, nsweeps: int = 1,
+                      out_path: str = None) -> None:
+        self.explorer.render_sample(sample_token, box_vis_level, nsweeps=nsweeps, out_path)
 
     def render_sample_data(self, sample_data_token: str, with_anns: bool = True,
                            box_vis_level: BoxVisibility = BoxVisibility.ANY, axes_limit: float = 40, ax: Axes = None,
@@ -594,7 +594,8 @@ class NuScenesExplorer:
     def render_sample(self,
                       token: str,
                       box_vis_level: BoxVisibility = BoxVisibility.ANY,
-                      nsweeps: int = 1) -> None:
+                      nsweeps: int = 1,
+                      out_path: str = None) -> None:
         """
         Render all LIDAR and camera sample_data in sample along with annotations.
         :param token: Sample token.
@@ -632,6 +633,10 @@ class NuScenesExplorer:
         axes.flatten()[-1].axis('off')
         plt.tight_layout()
         fig.subplots_adjust(wspace=0, hspace=0)
+
+        if out_path != None:
+            fig.savefig(path)  # save the figure to file
+            plt.close(fig)  # close the figure
 
     def render_sample_data(self,
                            sample_data_token: str,
